@@ -1,0 +1,9 @@
+{
+
+	"dataset" 		: "/home/achan/Documents/paper/Projekdwiki/ls/dataset/training_set",
+	"test_path"		: "/home/achan/Documents/paper/Projekdwiki/ls/dataset/test_set",
+	"features_path"	 	: "/home/achan/Documents/paper/Projekdwiki/ls/output/feature/feature.h5",
+	"labels_path" 		: "/home/achan/Documents/paper/Projekdwiki/ls/output/label/labels.h5",
+	"classifier_path" 	: "/home/achan/Documents/paper/Projekdwiki/ls/output/classifier/classifier.cpickle"
+
+}

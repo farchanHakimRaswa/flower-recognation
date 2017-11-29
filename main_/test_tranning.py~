@@ -1,0 +1,101 @@
+# import the necessary packages
+import h5py
+import numpy as np
+import os
+import glob
+import cv2
+from matplotlib import pyplot
+from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.model_selection import KFold, StratifiedKFold
+from sklearn.metrics import confusion_matrix, accuracy_score, classification_report
+from sklearn.linear_model import LogisticRegression
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+from sklearn.naive_bayes import GaussianNB
+from sklearn.svm import SVC
+from sklearn.externals import joblib
+import json
+
+
+with open('/home/achan/Documents/paper/Projekdwiki/ls/config/conf.json') as f:    
+	config = json.load(f)
+
+feature_path 	= config['features_path']
+labels_path 	= config['labels_path']
+classifier_path = config['classifier_path']
+
+
+# no.of.trees for Random Forests
+num_trees = 100
+# bins for histogram
+bins = 8
+
+# train_test_split size
+test_size = 0.10
+
+# seed for reproducing same results
+seed = 9
+# create all the machine learning models
+models = []
+models.append(('SVM', SVC(C=1000.0, kernel="rbf", gamma=10)))
+
+# variables to hold the results and names
+results = []
+names = []
+scoring = "accuracy"
+
+# import the feature vector and trained labels
+h5f_data = h5py.File('feature_path', 'r')
+h5f_label = h5py.File('labels_path', 'r')
+
+global_features_string = h5f_data['dataset_1']
+global_labels_string = h5f_label['dataset_1']
+
+global_features = np.array(global_features_string)
+global_labels = np.array(global_labels_string)
+
+h5f_data.close()
+h5f_label.close()
+
+# verify the shape of the feature vector and labels
+print "[STATUS] features shape: {}".format(global_features.shape)
+print "[STATUS] labels shape: {}".format(global_labels.shape)
+
+print "[STATUS] training started..."
+
+# split the training and testing data
+(trainDataGlobal, testDataGlobal, trainLabelsGlobal, testLabelsGlobal) = train_test_split(np.array(global_features),
+                                                                                          np.array(global_labels),
+                                                                                          test_size=test_size,
+                                                                                          random_state=seed)
+
+print "[STATUS] splitted train and test data..."
+print "Train data  : {}".format(trainDataGlobal.shape)
+print "Test data   : {}".format(testDataGlobal.shape)
+print "Train labels: {}".format(trainLabelsGlobal.shape)
+print "Test labels : {}".format(testLabelsGlobal.shape)
+
+# filter all the warnings
+import warnings
+warnings.filterwarnings('ignore')
+
+# 10-fold cross validation
+for name, model in models:
+    kfold = KFold(n_splits=10, random_state=7)
+    cv_results = cross_val_score(model, trainDataGlobal, trainLabelsGlobal, cv=kfold, scoring=scoring)
+    results.append(cv_results)
+    names.append(name)
+    msg = "%s: %f (%f)" % (name, cv_results.mean(), cv_results.std())
+    print(msg)
+
+pickle.dump(model, open(classifier_path, 'wb'))
+
+# boxplot algorithm comparison
+fig = pyplot.figure()
+fig.suptitle('Machine Learning algorithm comparison')
+ax = fig.add_subplot(111)
+pyplot.boxplot(results)
+ax.set_xticklabels(names)
+pyplot.show()
